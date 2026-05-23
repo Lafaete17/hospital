@@ -1,61 +1,67 @@
 
+DROP TABLE IF EXISTS request_exams;
+DROP TABLE IF EXISTS exams;
+DROP TABLE IF EXISTS consultation;
+DROP TABLE IF EXISTS doctors;
+DROP TABLE IF EXISTS patients;
 
 CREATE TABLE patients(
-    cpf VARCHAR(14) PRIMARY KEY,
-    name_patient VARCHAR(40),
+    id_patient INT IDENTITY(1,1) PRIMARY KEY,  --chave primária
+    cpf VARCHAR(14) UNIQUE NOT NULL, --cpf unico e protegido
+    name_patient VARCHAR(40) NOT NULL,
     phone_number VARCHAR(14),
     name_health_plan VARCHAR(20),
     type_health_plan VARCHAR (10)
 
 );
 
+CREATE INDEX idx_patients_cpf ON patients(cpf);
+
 CREATE TABLE doctors(
-    crm INT PRIMARY KEY,
-    name_doctor VARCHAR(30),
-    specialty VARCHAR(20)
+    id_doctor INT IDENTITY(1,1) PRIMARY KEY, --chave primária
+    crm INT UNIQUE NOT NULL, 
+    name_doctor VARCHAR(30) NOT NULL,
+    specialty VARCHAR(20)NOT NULL
 );
 
 CREATE TABLE consultation(
-    consultation_number INT IDENTITY (1,1) PRIMARY KEY,
-    consultation_date DATE,
-    consultation_time TIME,
-    fk_patient_cpf VARCHAR(14),
-    fk_doctors_crm INT,
+    id_consultation INT IDENTITY (1,1) PRIMARY KEY,
+    consultation_date DATE NOT NULL,
+    consultation_time TIME NOT NULL,
+    fk_id_patient INT NOT NULL, 
+    fk_id_doctor INT NOT NULL,   
 
-    FOREIGN KEY (fk_patient_cpf)
-    REFERENCES patients(cpf),
-
-    FOREIGN KEY (fk_doctors_crm)
-    REFERENCES doctors (crm)
-
+    FOREIGN KEY (fk_id_patient) REFERENCES patients(id_patient),
+    FOREIGN KEY (fk_id_doctor) REFERENCES doctors(id_doctor)
 );
 
 CREATE TABLE exams(
     code INT PRIMARY KEY,
-    specification VARCHAR(20),
-    price money
+    specification VARCHAR(50)NOT NULL,
+    price money NOT NULL
 );
 
 CREATE TABLE request_exams(
     request_number INT IDENTITY (1,1) PRIMARY KEY,
     result_exam VARCHAR(40),
-    exam_date DATE,
-    amount_payable money,
-    fk_consultation_number INT,
-    fk_exam_code INT,
+    exam_date DATE NOT NULL,
+    amount_payable money NOT NULL,
+    fk_id_consultation INT NOT NULL,
+    fk_exam_code INT NOT NULL,
 
-    FOREIGN KEY (fk_consultation_number)
-    REFERENCES consultation(consultation_number),
+    FOREIGN KEY (fk_id_consultation)
+     REFERENCES consultation(id_consultation),
 
     FOREIGN KEY(fk_exam_code)
     REFERENCES exams(code)
 );
+
 /*************************************
 *********INSERTS PATIENTS*************
 ***************************************/
 
 
-INSERT into patients
+INSERT into patients(cpf,name_patient, phone_number, name_health_plan, type_health_plan)
 VALUES(
     '123.456.789-00',
     'Mauricio Aragão',
@@ -64,7 +70,7 @@ VALUES(
     'premium'
 );
 
-INSERT into patients
+INSERT into patients(cpf,name_patient, phone_number, name_health_plan, type_health_plan)
 VALUES(
     '132.605.892-90',
     'Matheus Rodrigues',
@@ -73,7 +79,7 @@ VALUES(
     'silver'
 );
 
-INSERT into patients
+INSERT into patients(cpf,name_patient, phone_number, name_health_plan, type_health_plan)
 VALUES(
     '100.406.789-20',
     'Francisco Aragão',
@@ -82,7 +88,7 @@ VALUES(
     'gold'
 );
 
-INSERT into patients
+INSERT into patients(cpf,name_patient, phone_number, name_health_plan, type_health_plan)
 VALUES(
     '133.906.889-30',
     'Rosy Vieira',
@@ -95,21 +101,21 @@ VALUES(
 ***********NSERTS DOCTORS************
 ******************************************/
 
-INSERT into doctors
+INSERT into doctors(crm, name_doctor, specialty)
 VALUES(
     54189,
     'Dr Leandro Almeida',
     'Ortopedista'
 );
 
-INSERT into doctors
+INSERT into doctors(crm, name_doctor, specialty)
 VALUES(
     96835,
     'Dra Rosy Vieira',
     'Neurologista'
 );
 
-INSERT into doctors
+INSERT into doctors(crm, name_doctor, specialty)
 VALUES(
     78214,
     'Dr Lafaete Vieira',
@@ -120,28 +126,28 @@ VALUES(
 *********NSERTS CONSULTATION*************
 ******************************************/
 
-INSERT into consultation
+INSERT into consultation(consultation_date,consultation_time, fk_id_patient, fk_id_doctor)
 VALUES(
     '2026-05-11',
     '12:50',
-    '100.406.789-20',
-    96835
+    3,
+    2
 );
 
-INSERT into consultation
+INSERT into consultation(consultation_date,consultation_time, fk_id_patient, fk_id_doctor)
 VALUES(
     '2026-05-13',
     '12:50',
-    '133.906.889-30',
-    54189
+    4,
+    1
 );
 
-INSERT into consultation
+INSERT into consultation(consultation_date,consultation_time, fk_id_patient, fk_id_doctor)
 VALUES(
     '2026-05-10',
     '12:50',
-    '132.605.892-90',
-    78214
+    2,
+    3
 );
 
 /*****************************************
@@ -173,30 +179,30 @@ VALUES(
 ***********INSERT REQUEST_EXAMS***********
 ******************************************/
 
-INSERT into request_exams
+INSERT into request_exams(result_exam, exam_date, amount_payable, fk_id_consultation, fk_exam_code)
 values(
     'normal',
     '2026-05-11',
     120.00,
-    7,
+    1,
     1
 );
 
-INSERT into request_exams
+INSERT into request_exams(result_exam, exam_date, amount_payable, fk_id_consultation, fk_exam_code)
 values(
     'fracture',
     '2026-05-13',
     75.00,
-    8,
+    2,
     2
 );
 
-INSERT into request_exams
+INSERT into request_exams(result_exam, exam_date, amount_payable, fk_id_consultation, fk_exam_code)
 values(
     'no changes',
     '2026-05-13',
     1775.00,
-    9,
+    3,
     3
 );
 
@@ -252,9 +258,9 @@ SELECT
     consultation.consultation_date
 FROM consultation
 INNER JOIN patients
-ON consultation.fk_patient_cpf = patients.cpf
+ON consultation.fk_id_patient = patients.id_patient
 INNER JOIN doctors
-ON consultation.fk_doctors_crm = doctors.crm; 
+ON consultation.fk_id_doctor = doctors.id_doctor; 
 
 /*****************************************
 ******************************************
