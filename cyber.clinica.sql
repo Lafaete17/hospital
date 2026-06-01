@@ -1,4 +1,5 @@
 
+DROP TABLE IF EXISTS pharmacy;
 DROP TABLE IF EXISTS xray_exams;
 DROP TABLE IF EXISTS triage;
 DROP TABLE IF EXISTS request_exams;
@@ -103,6 +104,18 @@ CREATE TABLE xray_exams
     CONSTRAINT fk_xray_doctor FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor),
     CONSTRAINT fk_xray_request FOREIGN KEY (fk_request_number) REFERENCES request_exams(request_number)
 );
+
+CREATE TABLE pharmacy
+(
+    id_medication INT IDENTITY(1,1) PRIMARY KEY,
+    name_of_the_medication VARCHAR(50)NOT NULL,
+    dosage_medication VARCHAR (20) NOT NULL,
+    Pharmaceutical_form VARCHAR(30)NOT NULL,
+    Current_quantity_in_stock INT NOT NULL CHECK(Current_quantity_in_stock >= 0),
+    Batch_of_medicine varchar (20) NOT NULL,
+    Expiration_date DATE NOT NULL
+);
+
 
 /*************************************
 *********INSERTS PATIENTS*************
@@ -254,6 +267,45 @@ VALUES
     (4, 2, 1, 'Perna esquerda', 'AP (Anteroposterior) e perfil', 'Fratura de fêmur ', '/images/xray/2026/req_001.png');
 
 /*****************************************
+***********INSERTS PHARMACY**************
+******************************************/
+
+INSERT INTO pharmacy
+    (name_of_the_medication, dosage_medication, Pharmaceutical_form,Current_quantity_in_stock,Batch_of_medicine,Expiration_date)
+VALUES(
+        'dipirona',
+        '500 mg',
+        'comprimido',
+        100,
+        'D-260601-001',
+        '2030-05-10'
+);
+
+INSERT INTO pharmacy
+    (name_of_the_medication, dosage_medication, Pharmaceutical_form,Current_quantity_in_stock,Batch_of_medicine,Expiration_date)
+VALUES(
+        'buscopan',
+        '10mg',
+        'gotas',
+        100,
+        'b-260601-001',
+        '2038-06-10'
+);
+
+INSERT INTO pharmacy
+    (name_of_the_medication, dosage_medication, Pharmaceutical_form,Current_quantity_in_stock,Batch_of_medicine,Expiration_date)
+VALUES(
+        'tramal',
+        '500 mg',
+        'injetável',
+        60,
+        'Tr-260601-001',
+        '2027-05-10'
+);
+
+
+
+/*****************************************
 ***********UPDATES E DELETES**************
 ******************************************/
 UPDATE patients SET type_health_plan = 'special' WHERE cpf = '123.456.789-00';
@@ -333,3 +385,6 @@ FROM request_exams;
 
 SELECT*
 FROM xray_exams;
+
+SELECT*
+FROM pharmacy;
