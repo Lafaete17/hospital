@@ -116,6 +116,20 @@ CREATE TABLE pharmacy
     Expiration_date DATE NOT NULL
 );
 
+CREATE TABLE medication_room
+(
+    id_medication_room INT IDENTITY(1,1) PRIMARY KEY,
+    id_medication INT NOT NULL,
+    id_patient INT NOT NULL,
+    id_doctor INT NOT NULL,
+    id_employee INT NOT NULL,
+
+    CONSTRAINT fk_medication_patient FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
+    CONSTRAINT fk_medication_doctor FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor),
+    CONSTRAINT fk_medication_employee FOREIGN KEY (id_employee) REFERENCES EMPLOYEES(id_employee),
+    CONSTRAINT fk_medication_pharmacy FOREIGN KEY (id_medication) REFERENCES pharmacy(id_medication)
+);
+
 
 /*************************************
 *********INSERTS PATIENTS*************
