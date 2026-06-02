@@ -1,4 +1,5 @@
 
+DROP TABLE IF EXISTS medication_room;
 DROP TABLE IF EXISTS pharmacy;
 DROP TABLE IF EXISTS xray_exams;
 DROP TABLE IF EXISTS triage;
@@ -123,8 +124,11 @@ CREATE TABLE medication_room
     id_patient INT NOT NULL,
     id_doctor INT NOT NULL,
     id_employee INT NOT NULL,
+    applied_quantity INT NOT NULL CHECK(applied_quantity > 0),
+    administration_route VARCHAR(30) NOT NULL,
+    application_date DATETIME NOT NULL
 
-    CONSTRAINT fk_medication_patient FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
+        CONSTRAINT fk_medication_patient FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
     CONSTRAINT fk_medication_doctor FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor),
     CONSTRAINT fk_medication_employee FOREIGN KEY (id_employee) REFERENCES EMPLOYEES(id_employee),
     CONSTRAINT fk_medication_pharmacy FOREIGN KEY (id_medication) REFERENCES pharmacy(id_medication)
@@ -317,7 +321,24 @@ VALUES(
         '2027-05-10'
 );
 
+/*****************************************
+***********INSERTS medication_room********
+******************************************/
 
+/*id_medication,id_patient,id_doctor,id_employee,applied_quantity,administration_route,application_date*/
+
+INSERT INTO medication_room
+    (id_medication,id_patient,id_doctor,id_employee,applied_quantity,administration_route,application_date)
+VALUES(
+        2,
+        4,
+        3,
+        1,
+        2,
+        'oral',
+        '2026-06-02 10:00'
+
+);
 
 /*****************************************
 ***********UPDATES E DELETES**************
@@ -381,6 +402,22 @@ FROM consultation
     ON consultation.fk_id_doctor = doctors.id_doctor;
 
 
+SELECT
+    mr.id_medication_room AS 'Cód.Registro',
+    p.name_of_the_medication AS 'Medicamento',
+    pat.name_patient AS 'Paciente',
+    doc.name_doctor AS 'Médico Prescritor',
+    emp.name_employee AS 'Profissional',
+    mr.applied_quantity AS 'quantidade',
+    mr.administration_route AS 'Via',
+    mr.application_date AS 'Data/Hora'
+FROM medication_room mr
+    INNER JOIN pharmacy p ON mr.id_medication = p.id_medication
+    INNER JOIN patients pat ON mr.id_patient = pat.id_patient
+    INNER JOIN doctors doc ON mr.id_doctor = doc.id_doctor
+    INNER JOIN employees emp ON mr.id_employee = emp.id_employee;
+
+
 
 SELECT *
 FROM patients;
@@ -402,3 +439,6 @@ FROM xray_exams;
 
 SELECT*
 FROM pharmacy;
+
+SELECT*
+FROM medication_room;
