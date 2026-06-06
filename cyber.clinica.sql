@@ -134,6 +134,19 @@ CREATE TABLE medication_room
     CONSTRAINT fk_medication_pharmacy FOREIGN KEY (id_medication) REFERENCES pharmacy(id_medication)
 );
 
+CREATE TABLE medical_record
+(
+    id_medical_record INT IDENTITY (1,1) PRIMARY KEY,
+    id_patient INT NOT NULL,
+    diagnosis VARCHAR(150),
+    symptoms TEXT NOT NULL,
+    id_consultation INT NOT NULL,
+    allergies VARCHAR (250),
+
+    CONSTRAINT fk_medical_record FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
+    CONSTRAINT fk_record_consultation FOREIGN KEY (id_consultation) REFERENCES consultation(id_consultation)
+);
+
 
 /*************************************
 *********INSERTS PATIENTS*************
@@ -340,6 +353,34 @@ VALUES(
 
 );
 
+
+/*************************************
+*********INSERTS MEDICAL RECORD*******
+***************************************/
+
+/*id_medical_record, id_patient,diagnosis,symptoms,id_consultation,allergies  */
+
+INSERT INTO medical_record
+    (id_patient, id_consultation, diagnosis, symptoms, allergies)
+VALUES(
+        2,
+        2,
+        'suspeita de gripe',
+        'paciente apresenta corisa, fraqueza,febre e dor de cabeça',
+        'sem alergias conhecidas'
+);
+
+INSERT INTO medical_record
+    (id_patient, id_consultation, diagnosis, symptoms, allergies)
+VALUES(
+        3,
+        3,
+        'suspeita de dengue',
+        'Paciente apresenta febre alta, dor de cabeça e mialgia há 2 dias.',
+        'sem alergias conhecidas'
+);
+
+
 /*****************************************
 ***********UPDATES E DELETES**************
 ******************************************/
@@ -357,88 +398,22 @@ DELETE FROM patients WHERE cpf = '999.999.999-99';
 
 
 /*****************************************
-************SELECTS***********************
+************VIEWS***********************
 ******************************************/
+GO
+CREATE VIEW vw_clinical_report
+AS
+    SELECT
+        mr.id_medical_record,
+        p.name_patient AS name_patient,
+        mr.diagnosis,
+        mr.symptoms,
+        d.name_doctor AS name_doctor,
+        c.consultation_date
+    FROM medical_record mr
 
-SELECT
-    p.name_patient AS 'Paciente',
-    d.name_doctor AS 'Médico',
-    x.fk_request_number AS 'Nº Pedido',
-    x.scan_area AS 'Região',
-    x.radiological_findings AS 'Laudo Radiológico'
-FROM xray_exams x
-    INNER JOIN patients p ON x.id_patient = p.id_patient
-    INNER JOIN doctors d ON x.id_doctor = d.id_doctor;
+        INNER JOIN patients p ON mr.id_patient = p.id_patient
+        INNER JOIN consultation c ON mr.id_consultation = c.id_consultation
+        INNER JOIN doctors d ON c.fk_id_doctor = d.id_doctor;
 
-
-SELECT
-    t.id_triage AS 'Nº Triagem',
-    p.id_patient AS 'ID Paciente',
-    p.name_patient AS 'Paciente',
-    t.weight_patient AS 'Peso',
-    t.height_patient AS 'Altura',
-    t.blood_pressure AS 'P.A.',
-    t.temperature_patient AS 'Temp',
-    t.symptoms_patient AS 'sintomas',
-    t.classification_level AS 'Classificação',
-    e.id_employee AS 'ID Funcionário',
-    e.name_employee AS 'Profissional',
-    t.triage_date AS 'Data/Hora'
-FROM triage t
-    INNER JOIN patients p ON t.id_patient = p.id_patient
-    INNER JOIN employees e ON t.id_employee = e.id_employee
-
-
-
-SELECT
-    patients.name_patient,
-    doctors.name_doctor,
-    consultation.consultation_date
-
-FROM consultation
-    INNER JOIN patients
-    ON consultation.fk_id_patient = patients.id_patient
-    INNER JOIN doctors
-    ON consultation.fk_id_doctor = doctors.id_doctor;
-
-
-SELECT
-    mr.id_medication_room AS 'Cód.Registro',
-    p.name_of_the_medication AS 'Medicamento',
-    pat.name_patient AS 'Paciente',
-    doc.name_doctor AS 'Médico Prescritor',
-    emp.name_employee AS 'Profissional',
-    mr.applied_quantity AS 'quantidade',
-    mr.administration_route AS 'Via',
-    mr.application_date AS 'Data/Hora'
-FROM medication_room mr
-    INNER JOIN pharmacy p ON mr.id_medication = p.id_medication
-    INNER JOIN patients pat ON mr.id_patient = pat.id_patient
-    INNER JOIN doctors doc ON mr.id_doctor = doc.id_doctor
-    INNER JOIN employees emp ON mr.id_employee = emp.id_employee;
-
-
-
-SELECT *
-FROM patients;
-
-SELECT *
-FROM doctors;
-
-SELECT *
-FROM consultation;
-
-SELECT *
-FROM exams;
-
-SELECT *
-FROM request_exams;
-
-SELECT*
-FROM xray_exams;
-
-SELECT*
-FROM pharmacy;
-
-SELECT*
-FROM medication_room;
+   
