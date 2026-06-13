@@ -16,6 +16,45 @@ DROP TABLE IF EXISTS doctors;
 DROP TABLE IF EXISTS patients;
 
 /*********************************************************
+********* DROP SECURITY OBJECTS (REEXECUÇÃO) *************
+**********************************************************/
+
+-- 1. Removendo os vínculos dos membros das Roles
+ALTER ROLE db_receptionist_role DROP MEMBER user_rebeca;
+ALTER ROLE db_receptionist_role DROP MEMBER user_lucas;
+ALTER ROLE db_doctor_role DROP MEMBER user_lafaete;
+ALTER ROLE db_doctor_role DROP MEMBER user_rosymeire;
+ALTER ROLE db_nurse_role DROP MEMBER user_maria_silva;
+ALTER ROLE db_nurse_role DROP MEMBER user_joao_carlos;
+GO
+
+-- 2. Derrubando as Roles customizadas
+DROP ROLE IF EXISTS db_admin_role;
+DROP ROLE IF EXISTS db_receptionist_role;
+DROP ROLE IF EXISTS db_doctor_role;
+DROP ROLE IF EXISTS db_nurse_role;
+GO
+
+-- 3. Derrubando os usuários vinculados ao banco PulseShield
+DROP USER IF EXISTS user_rebeca;
+DROP USER IF EXISTS user_lucas;
+DROP USER IF EXISTS user_lafaete;
+DROP USER IF EXISTS user_rosymeire;
+DROP USER IF EXISTS user_maria_silva;
+DROP USER IF EXISTS user_joao_carlos;
+GO
+
+-- 4. Derrubando os logins globais do servidor
+DROP LOGIN login_rebeca;
+DROP LOGIN login_lucas;
+DROP LOGIN login_lafaete;
+DROP LOGIN login_rosymeire;
+DROP LOGIN login_maria_silva;
+DROP LOGIN login_joao_carlos;
+GO
+
+
+/*********************************************************
 ********* CREATION OF TABLES (ESTRUTURA) *****************
 **********************************************************/
 
@@ -318,7 +357,7 @@ AS
 GO
 
 /*********************************************************
-********* SECURITY: ROLES AND PERMISSIONS (receptionist) *
+********* SECURITY: ROLES AND PERMISSIONS (admin role) *
 **********************************************************/
 GO
 
@@ -327,6 +366,10 @@ GO
 
 GRANT CONTROL TO db_admin_role;
 GO
+
+/*********************************************************
+********* SECURITY: ROLES AND PERMISSIONS (receptionist) *
+**********************************************************/
 
 CREATE ROLE db_receptionist_role;
 GO
@@ -388,4 +431,70 @@ DENY SELECT,INSERT,UPDATE,DELETE ON medical_record TO db_nurse_role;
 GO
 
 DENY SELECT, INSERT, UPDATE, DELETE ON xray_exams TO db_nurse_role;
+GO
+
+/*********************************************************
+** CREATING LOGINS AND ASSIGNING TO ROLES (RECEPTIONISTS)*
+**********************************************************/
+
+CREATE LOGIN login_rebeca WITH PASSWORD = 'SecurePassword123!';
+GO
+
+CREATE USER user_rebeca FOR LOGIN login_rebeca;
+GO
+
+ALTER ROLE db_receptionist_role ADD MEMBER user_rebeca;
+GO
+
+
+CREATE LOGIN login_lucas WITH PASSWORD = 'SecurePassword1234!';
+GO
+
+CREATE USER user_lucas FOR LOGIN login_lucas;
+GO
+
+ALTER ROLE db_receptionist_role ADD MEMBER user_lucas;
+GO
+
+/*********************************************************
+******CREATING LOGINS AND ASSIGNING TO ROLES (DOCTORS)****
+**********************************************************/
+CREATE LOGIN login_lafaete WITH PASSWORD = 'SecureMed123!';
+GO
+
+CREATE USER user_lafaete FOR LOGIN login_lafaete;
+GO
+
+ALTER ROLE db_doctor_role ADD MEMBER user_lafaete;
+GO
+
+CREATE LOGIN login_rosymeire WITH PASSWORD = 'SecureMed123!';
+GO
+
+CREATE USER user_rosymeire FOR LOGIN login_rosymeire;
+GO
+
+ALTER ROLE db_doctor_role ADD MEMBER user_rosymeire;
+GO
+
+/*********************************************************
+** CREATING LOGINS AND ASSIGNING TO ROLES (NURSE)*********
+**********************************************************/
+
+CREATE LOGIN login_maria_silva WITH PASSWORD = 'SecureNurse123!';
+GO
+
+CREATE USER user_maria_silva FOR LOGIN login_maria_silva;
+GO
+
+ALTER ROLE db_nurse_role ADD MEMBER user_maria_silva;
+GO
+
+CREATE LOGIN login_joao_carlos WITH PASSWORD = 'SecureNurse1234!';
+GO
+
+CREATE USER user_joao_carlos FOR LOGIN login_joao_carlos;
+GO
+
+ALTER ROLE db_nurse_role ADD MEMBER user_joao_carlos;
 GO
