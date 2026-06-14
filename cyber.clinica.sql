@@ -1,5 +1,5 @@
 /*********************************************************
-********* DROP TABLES (ORDEM DE DEPENDÊNCIA) *************
+************** TABLES (ORDEM DE DEPENDÊNCIA)**************
 **********************************************************/
 DROP VIEW IF EXISTS vw_clinical_report;
 DROP TABLE IF EXISTS medical_record;
@@ -14,6 +14,12 @@ DROP TABLE IF EXISTS receptionists;
 DROP TABLE IF EXISTS nursing_staff;
 DROP TABLE IF EXISTS doctors;
 DROP TABLE IF EXISTS patients;
+
+/*********************************************************
+************** STORED PROCEDURE***************************
+**********************************************************/
+DROP PROCEDURE IF EXISTS sp_AddMedicalRecord;
+GO
 
 /*********************************************************
 ********* DROP SECURITY OBJECTS (REEXECUÇÃO) *************
@@ -51,7 +57,6 @@ DROP LOGIN login_lafaete;
 DROP LOGIN login_rosymeire;
 DROP LOGIN login_maria_silva;
 DROP LOGIN login_joao_carlos;
-GO
 
 
 /*********************************************************
@@ -63,7 +68,8 @@ CREATE TABLE receptionists
     id_receptionist INT IDENTITY(1,1) PRIMARY KEY,
     name_receptionist VARCHAR(60) NOT NULL,
     cpf_receptionist VARCHAR(14) UNIQUE NOT NULL,
-    work_shift VARCHAR(20),/* Horário do expediente */
+    work_shift VARCHAR(20),
+    /* Horário do expediente */
     status_receptionist BIT DEFAULT 1 NOT NULL
 );
 
@@ -357,6 +363,27 @@ AS
 GO
 
 /*********************************************************
+************** STORED PROCEDURE***************************
+**********************************************************/
+GO
+CREATE PROCEDURE sp_AddMedicalRecord
+    @id_patient INT,
+    @diagnosis VARCHAR(150),
+    @symptoms VARCHAR(255),
+    @id_consultation INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO medical_record
+        (id_patient, id_consultation, diagnosis, symptoms)
+    VALUES
+        (@id_patient, @id_consultation, @diagnosis, @symptoms);
+    PRINT 'Evolução clínica cadastrada com sucesso via Protocolo Seguro!';
+
+END;
+GO
+
+/*********************************************************
 ********* SECURITY: ROLES AND PERMISSIONS (admin role) *
 **********************************************************/
 GO
@@ -396,8 +423,10 @@ GO
 CREATE ROLE db_doctor_role;
 GO
 
-GRANT SELECT, INSERT,UPDATE ON medical_record TO db_doctor_role;
+GRANT SELECT, UPDATE ON medical_record TO db_doctor_role;
 GO
+
+GRANT EXECUTE ON sp_AddMedicalRecord TO db_doctor_role;
 
 GRANT SELECT, INSERT, UPDATE ON xray_exams TO db_doctor_role;
 GO
@@ -498,3 +527,5 @@ GO
 
 ALTER ROLE db_nurse_role ADD MEMBER user_joao_carlos;
 GO
+
+
