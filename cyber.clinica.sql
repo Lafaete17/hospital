@@ -1,7 +1,25 @@
 /*********************************************************
+************** SECURITY OBJECTS & PROGRAMMABILITY *********
+**********************************************************/
+-- 1. Derruba os gatilhos e visões primeiro (Eles dependem das tabelas)
+DROP TRIGGER IF EXISTS tr_EnforceTimeAccessControl;
+GO
+DROP VIEW IF EXISTS vw_clinical_report;
+GO
+
+-- 2. Derrubando rotinas e funções de validação
+DROP PROCEDURE IF EXISTS sp_AddMedicalRecord;
+GO
+DROP FUNCTION IF EXISTS fn_CheckUserAccessTime;
+GO
+
+/*********************************************************
 ************** TABLES (ORDEM DE DEPENDÊNCIA)**************
 **********************************************************/
-DROP VIEW IF EXISTS vw_clinical_report;
+-- 3. Agora que as travas sumiram, derrubamos as tabelas (Filhas primeiro, Pais depois)
+DROP TABLE IF EXISTS user_schedules;
+DROP TABLE IF EXISTS work_shift;
+-- Ajustado para bater com o nome no singular que você usou
 DROP TABLE IF EXISTS medical_record;
 DROP TABLE IF EXISTS medication_room;
 DROP TABLE IF EXISTS pharmacy;
@@ -14,34 +32,29 @@ DROP TABLE IF EXISTS receptionists;
 DROP TABLE IF EXISTS nursing_staff;
 DROP TABLE IF EXISTS doctors;
 DROP TABLE IF EXISTS patients;
-
-/*********************************************************
-************** STORED PROCEDURE***************************
-**********************************************************/
-DROP PROCEDURE IF EXISTS sp_AddMedicalRecord;
 GO
 
 /*********************************************************
 ********* DROP SECURITY OBJECTS (REEXECUÇÃO) *************
 **********************************************************/
 
--- 1. Removendo os vínculos dos membros das Roles
-ALTER ROLE db_receptionist_role DROP MEMBER user_rebeca;
-ALTER ROLE db_receptionist_role DROP MEMBER user_lucas;
-ALTER ROLE db_doctor_role DROP MEMBER user_lafaete;
-ALTER ROLE db_doctor_role DROP MEMBER user_rosymeire;
-ALTER ROLE db_nurse_role DROP MEMBER user_maria_silva;
-ALTER ROLE db_nurse_role DROP MEMBER user_joao_carlos;
+-- 4. Removendo os vínculos dos membros das Roles com segurança condicional
+IF IS_ROLEMEMBER('db_receptionist_role', 'user_rebeca') = 1 ALTER ROLE db_receptionist_role DROP MEMBER user_rebeca;
+IF IS_ROLEMEMBER('db_receptionist_role', 'user_lucas') = 1 ALTER ROLE db_receptionist_role DROP MEMBER user_lucas;
+IF IS_ROLEMEMBER('db_doctor_role', 'user_lafaete') = 1 ALTER ROLE db_doctor_role DROP MEMBER user_lafaete;
+IF IS_ROLEMEMBER('db_doctor_role', 'user_rosymeire') = 1 ALTER ROLE db_doctor_role DROP MEMBER user_rosymeire;
+IF IS_ROLEMEMBER('db_nurse_role', 'user_maria_silva') = 1 ALTER ROLE db_nurse_role DROP MEMBER user_maria_silva;
+IF IS_ROLEMEMBER('db_nurse_role', 'user_joao_carlos') = 1 ALTER ROLE db_nurse_role DROP MEMBER user_joao_carlos;
 GO
 
--- 2. Derrubando as Roles customizadas
+-- 5. Derrubando as Roles customizadas
 DROP ROLE IF EXISTS db_admin_role;
 DROP ROLE IF EXISTS db_receptionist_role;
 DROP ROLE IF EXISTS db_doctor_role;
 DROP ROLE IF EXISTS db_nurse_role;
 GO
 
--- 3. Derrubando os usuários vinculados ao banco PulseShield
+-- 6. Derrubando os usuários vinculados ao banco PulseShield
 DROP USER IF EXISTS user_rebeca;
 DROP USER IF EXISTS user_lucas;
 DROP USER IF EXISTS user_lafaete;
@@ -50,18 +63,40 @@ DROP USER IF EXISTS user_maria_silva;
 DROP USER IF EXISTS user_joao_carlos;
 GO
 
--- 4. Derrubando os logins globais do servidor
+-- 7. Derrubando os logins globais do servidor
 DROP LOGIN login_rebeca;
 DROP LOGIN login_lucas;
 DROP LOGIN login_lafaete;
 DROP LOGIN login_rosymeire;
 DROP LOGIN login_maria_silva;
 DROP LOGIN login_joao_carlos;
+GO
 
 
 /*********************************************************
 ********* CREATION OF TABLES (ESTRUTURA) *****************
 **********************************************************/
+
+CREATE TABLE work_shift
+(
+    id_shift INT IDENTITY(1,1) PRIMARY KEY,
+    shift_name VARCHAR(30) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+GO
+
+CREATE TABLE user_schedules
+(
+    id_schedules INT IDENTITY(1,1) PRIMARY KEY,
+    db_username VARCHAR(128) NOT NULL,
+    fk_id_shift INT NOT NULL,
+    allowed_day_of_week INT NOT NULL CHECK(allowed_day_of_week BETWEEN 1 AND 7),
+
+    CONSTRAINT fk_id_schedules FOREIGN KEY (fk_id_shift) REFERENCES work_shift(id_shift)
+);
+GO
+-- Adicionado aqui para fechar o lote da tabela de segurança de horários!
 
 CREATE TABLE receptionists
 (
@@ -213,6 +248,23 @@ CREATE TABLE medical_record
     CONSTRAINT fk_medical_record FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
     CONSTRAINT fk_record_consultation FOREIGN KEY (id_consultation) REFERENCES consultation(id_consultation)
 );
+
+/*********************************************************
+********* INSERTS FOR TIME-BASED SECURITY ****************
+**********************************************************/
+INSERT INTO work_shift
+    (shift_name, start_time, end_time)
+VALUES
+    ('Plantão Diurno Hospitalar', '07:00:00', '19:00:00'),
+    ('Plantão Noturno Hospitalar', '19:00:00', '07:00:00');
+GO
+
+INSERT INTO user_schedules
+    (db_username,fk_id_shift, allowed_day_of_week)
+VALUES
+    ('user_rebeca', 1, 3),
+    ('user_lafaete', 1, 3);
+GO
 
 /*************************************
 ********* INSERTS PATIENTS ***********
@@ -526,6 +578,64 @@ CREATE USER user_joao_carlos FOR LOGIN login_joao_carlos;
 GO
 
 ALTER ROLE db_nurse_role ADD MEMBER user_joao_carlos;
+GO
+
+/*********************************************************
+************** SECURITY: TIME ACCESS FUNCTION ************
+**********************************************************/
+GO
+CREATE FUNCTION fn_CheckUserAccessTime (@username VARCHAR(128))
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @is_allowed BIT = 0;
+    DECLARE @current_time TIME = CONVERT(TIME, GETDATE());
+    DECLARE @current_day INT = DATEPART(WEEKDAY, GETDATE());
+
+    -- Verifica se existe uma escala ativa para o usuário neste exato momento
+    IF EXISTS (
+        SELECT 1
+    FROM user_schedules us
+        INNER JOIN work_shift ws ON us.fk_id_shift = ws.id_shift
+    WHERE us.db_username = @username
+        AND us.allowed_day_of_week = @current_day
+        AND (
+                -- Caso 1: Turno padrão que não vira o dia (Ex: 07:00 às 19:00)
+                (ws.start_time <= ws.end_time AND @current_time BETWEEN ws.start_time AND ws.end_time)
+        OR
+        -- Caso 2: Turno noturno que vira o dia (Ex: 19:00 às 07:00 do dia seguinte)
+        (ws.start_time > ws.end_time AND (@current_time >= ws.start_time OR @current_time <= ws.end_time))
+          )
+    )
+    BEGIN
+        SET @is_allowed = 1;
+    END;
+
+    RETURN @is_allowed;
+END;
+GO
+
+/*********************************************************
+************** SECURITY: TIME ACCESS TRIGGER *************
+**********************************************************/
+CREATE TRIGGER tr_EnforceTimeAccessControl
+ON consultation
+FOR INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Captura o usuário do sistema que disparou o comando atual
+    DECLARE @current_user VARCHAR(128) = SYSTEM_USER;
+
+    -- Se o usuário NÃO tiver um plantão ativo neste exato momento, barra ele!
+    IF dbo.fn_CheckUserAccessTime(@current_user) = 0
+    BEGIN
+        RAISERROR ('[PulseShield Security] Acesso bloqueado! Seu usuário não possui um plantão ativo para este horário ou dia da semana.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+END;
 GO
 
 

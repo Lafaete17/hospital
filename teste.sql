@@ -150,3 +150,21 @@ PRINT '--- FIM DO PROTOCOLO DE AUDITORIA: SISTEMA PULSESHIELD HOMOLOGADO ---';
 PRINT '=================================================================';
 SELECT CURRENT_USER AS Contexto_Seguro_Final;
 GO
+
+
+/*********************************************************
+************** TEST SECURITY: TIME ACCESS TRIGGER *************
+**********************************************************/
+
+EXECUTE AS USER = 'user_lucas';
+GO
+
+-- Tentando inserir uma consulta na marra fora do horário
+INSERT INTO consultation
+    (consultation_date, consultation_time, fk_id_patient, fk_id_doctor)
+VALUES
+    ('2026-06-16', '16:00:00', 1, 1);
+GO
+
+REVERT;
+GO
