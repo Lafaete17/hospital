@@ -151,14 +151,13 @@ CREATE TABLE user_credentials
     fk_id_receptionist INT NULL FOREIGN KEY REFERENCES receptionists(id_receptionist),
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    password_salt VARCHAR(255)NOT NULL,
-    reset_token VARCHAR(100) NOT NULL,
+    password_salt VARCHAR(255) NOT NULL,
+    reset_token VARCHAR(100) NULL,
+    -- <-- AJUSTADO PARA NULL!
     token_expires_at DATETIME NULL,
     is_active BIT DEFAULT 1 NOT NULL,
     last_login DATETIME NULL
 );
-
-
 
 CREATE TABLE exams
 (
@@ -453,6 +452,74 @@ BEGIN
 
 END;
 GO
+
+/*********************************************************
+**********STORED PROCEDURE Register User Credentials******
+**********************************************************/
+CREATE PROCEDURE sp_RegisterUserCredentials
+    -- <-- CORRIGIDO O NOME COM 1 "D"!
+    @username VARCHAR(50),
+    @fk_id_doctor INT = NULL,
+    @fk_id_nurse INT = NULL,
+    @fk_id_receptionist INT = NULL,
+    @password_hash VARCHAR(255),
+    @password_salt VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO user_credentials
+        (username, fk_id_doctor, fk_id_nurse, fk_id_receptionist, password_hash, password_salt)
+    VALUES
+        (@username, @fk_id_doctor, @fk_id_nurse, @fk_id_receptionist, @password_hash, @password_salt);
+    PRINT 'Credenciais de acesso registradas com sucesso no PulseShield!';
+END;
+GO
+
+
+/*********************************************************
+********STORED PROCEDURE Generate Password Reset Token***
+**********************************************************/
+CREATE PROCEDURE sp_GeneratePasswordResetToken
+    @username VARCHAR(50),
+    @reset_token VARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE user_credentials
+    SET reset_token = @reset_token,
+        token_expires_at = DATEADD(MINUTE, 15, GETDATE())
+    WHERE username = @username;
+    -- <-- CORRIGIDO PARA O NOME EXATO DA COLUNA!
+    PRINT 'Token de redefinição gerado com sucesso!';
+END;
+GO
+
+/*********************************************************
+********STORED PROCEDURE Validate Password Reset***
+**********************************************************/
+CREATE PROCEDURE sp_ValidatePasswordReset
+    @username VARCHAR(50),
+    @reset_token VARCHAR(100),
+    @new_password_hash VARCHAR(255),
+    @new_password_salt VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE user_credentials
+    SET password_hash = @new_password_hash,
+        password_salt = @new_password_salt,
+        reset_token = NULL,
+        token_expires_at = NULL
+    WHERE username = @username
+        AND reset_token = @reset_token
+        AND token_expires_at >= GETDATE();
+
+    PRINT 'Senha redefinida com sucesso';
+END;   
+GO
+
+
 
 /*********************************************************
 ********* SECURITY: ROLES AND PERMISSIONS (admin role) *
