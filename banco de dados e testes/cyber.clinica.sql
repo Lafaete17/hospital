@@ -17,9 +17,10 @@ GO
 ************** TABLES (ORDEM DE DEPENDÊNCIA)**************
 **********************************************************/
 -- 3. Agora que as travas sumiram, derrubamos as tabelas (Filhas primeiro, Pais depois)
+DROP TABLE IF EXISTS user_credentials;
 DROP TABLE IF EXISTS user_schedules;
 DROP TABLE IF EXISTS work_shift;
--- Ajustado para bater com o nome no singular que você usou
+-- Ajustado para bater com o nome no singular
 DROP TABLE IF EXISTS medical_record;
 DROP TABLE IF EXISTS medication_room;
 DROP TABLE IF EXISTS pharmacy;
@@ -96,7 +97,6 @@ CREATE TABLE user_schedules
     CONSTRAINT fk_id_schedules FOREIGN KEY (fk_id_shift) REFERENCES work_shift(id_shift)
 );
 GO
--- Adicionado aqui para fechar o lote da tabela de segurança de horários!
 
 CREATE TABLE receptionists
 (
@@ -138,6 +138,27 @@ CREATE TABLE nursing_staff
     /* Registro Profissional Obrigatório */
     status_nurse BIT DEFAULT 1 NOT NULL
 );
+
+/*********************************************************
+********* ***** USER_CREDENTIALS  ************************
+**********************************************************/
+
+CREATE TABLE user_credentials
+(
+    id_credentials INT IDENTITY(1,1) PRIMARY KEY,
+    fk_id_doctor INT NULL FOREIGN KEY REFERENCES doctors(id_doctor),
+    fk_id_nurse INT NULL FOREIGN KEY REFERENCES nursing_staff(id_nurse),
+    fk_id_receptionist INT NULL FOREIGN KEY REFERENCES receptionists(id_receptionist),
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    password_salt VARCHAR(255)NOT NULL,
+    reset_token VARCHAR(100) NOT NULL,
+    token_expires_at DATETIME NULL,
+    is_active BIT DEFAULT 1 NOT NULL,
+    last_login DATETIME NULL
+);
+
+
 
 CREATE TABLE exams
 (
@@ -187,7 +208,6 @@ CREATE TABLE triage
 
     CONSTRAINT fk_triage_patient FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
     CONSTRAINT fk_triage_nurse FOREIGN KEY (id_nurse) REFERENCES nursing_staff(id_nurse)
-    -- Chave estrangeira corrigida
 );
 
 CREATE TABLE xray_exams
@@ -232,7 +252,6 @@ CREATE TABLE medication_room
     CONSTRAINT fk_medication_patient FOREIGN KEY (id_patient) REFERENCES patients(id_patient),
     CONSTRAINT fk_medication_doctor FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor),
     CONSTRAINT fk_medication_nurse FOREIGN KEY (id_nurse) REFERENCES nursing_staff(id_nurse),
-    -- Chave estrangeira corrigida
     CONSTRAINT fk_medication_pharmacy FOREIGN KEY (id_medication) REFERENCES pharmacy(id_medication)
 );
 
@@ -447,7 +466,7 @@ GRANT CONTROL TO db_admin_role;
 GO
 
 /*********************************************************
-********* SECURITY: ROLES AND PERMISSIONS (receptionist) *
+********* SECURITY: ROLES AND PERMISSIONS (RECEPTIONIST) *
 **********************************************************/
 
 CREATE ROLE db_receptionist_role;
@@ -469,7 +488,7 @@ DENY SELECT, INSERT,UPDATE,DELETE ON xray_exams TO db_receptionist_role;
 GO
 
 /*********************************************************
-********* SECURITY: ROLES AND PERMISSIONS (doctor)********
+********* SECURITY: ROLES AND PERMISSIONS (DOCTOR)********
 **********************************************************/
 
 CREATE ROLE db_doctor_role;
@@ -493,7 +512,7 @@ GRANT SELECT ON consultation TO db_doctor_role;
 GO
 
 /*********************************************************
-********* SECURITY: ROLES AND PERMISSIONS (nurse role)****
+********* SECURITY: ROLES AND PERMISSIONS (NURSE ROLE)****
 **********************************************************/
 
 CREATE ROLE db_nurse_role

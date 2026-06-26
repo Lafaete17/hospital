@@ -1,0 +1,22 @@
+o objetivo do teste;
+o escopo do sistema e os requisitos que deverão ser avaliados;
+os elementos que serão testados e quais dados serão monitorados durante a execução do teste;
+o cronograma de atividades;
+a técnica que será utilizada (funcional, estrutural etc.);
+os recursos que serão utilizados (tipo de software);
+o responsável pelo monitoramento dos dados de erros, pelo recebimento dos dados coletados e pela correção de erros;
+as referências às normas aplicadas ao teste e a outros documentos associados ao projeto.
+
+********************************************************************************
+********************************************************************************
+********************************************************************************
+
+Objetivo e Escopo: O foco principal aqui será validar as regras críticas de negócio — como a validação da IA na pré-evolução médica e o controle de vagas dos leitos pelo posto de enfermagem.
+
+Elementos Testados e Dados Monitorados: Aqui entram os testes das nossas triggers temporais no SQL Server, os hashes de segurança e a integridade dos dados dos pacientes.
+
+Técnicas e Recursos: Usaremos testes funcionais (para ver se as telas e botões respondem certo) e estruturais/unitários no Back-end, rodando tudo direto no seu ambiente de desenvolvimento no Zorin OS.
+
+Responsável e Correção: Por enquanto, o CEO, Arquiteto e Desenvolvedor Lafaete assume todas as pontas (o verdadeiro modelo bootstrap de alta performance!).
+
+Referências: É aqui que você crava o selo da IEEE 829-2008, mostrando conformidade técnica global.
