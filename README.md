@@ -91,4 +91,4 @@ Lafaete Vieira
 
 Estudante de Análise e Desenvolvimento de Sistemas (ADS)
 
-Focado em Cybersecurity, DevSecOps e Infraestrutura de Dados.
+Focado em Cybersecurity, DevSecOps e Infraestrutura de Dados. 
