@@ -42,37 +42,6 @@ sp_GeneratePasswordResetToken: Geração de tokens de redefinição com expiraç
 
 sp_ValidatePasswordReset: Validação e redefinição segura de credenciais.
 
-🗂️ Estrutura do Banco de Dados (Database Schema)
-Plaintext
-PulseShield DB (T-SQL)
- ├── Security & Access Control
- │    ├── user_credentials (Hashes, Salts & Tokens de Recuperação)
- │    ├── work_shift (Cadastro de Turnos Diurnos e Noturnos)
- │    ├── user_schedules (Escala de Horários e Dias Permitidos)
- │    └── Roles & Logins (db_receptionist_role, db_doctor_role, db_nurse_role)
- │
- ├── Clinical & Operations
- │    ├── patients (Cadastro de Pacientes e Planos de Saúde)
- │    ├── doctors (Corpo Médico & Especialidades)
- │    ├── nursing_staff (Corpo de Enfermagem & COREN)
- │    ├── receptionists (Recepção Hospitalar)
- │    ├── consultation (Agendamento de Consultas)
- │    ├── triage (Classificação de Risco & Sinais Vitais)
- │    ├── medical_record (Prontuários Eletrônicos)
- │    └── xray_exams (Laudos e Exames Radiológicos)
- │
- └── Pharmacy & Supplies
-      ├── pharmacy (Estoque de Medicamentos, Lotes e Validades)
-      └── medication_room (Registro de Aplicação de Medicamentos)
-🧪 Validação em Laboratório (Cybersecurity Lab)
-O projeto foi submetido a testes rigorosos em ambiente virtualizado (Zorin OS / Kali Linux):
-
-Tentativas de Elevação de Privilégios: Validação de bloqueios nativos do SQL Server ao tentar acessar tabelas não autorizadas via contas de nível inferior.
-
-Bypass Temporal: Testes de inserção fora do horário de plantão com interceptação e resposta da Trigger.
-
-Análise de Tráfego de Rede: Inspeção de pacotes TDS (Porta 1433) via Wireshark.
-
 🗺️ Próximos Passos (Roadmap)
 [x] Modelagem do Banco de Dados e Mapeamento de Entidades
 
